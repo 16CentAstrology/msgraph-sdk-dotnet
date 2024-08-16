@@ -2,53 +2,57 @@
 //  Copyright (c) Microsoft Corporation.  All Rights Reserved.  Licensed under the MIT License.  See License in the project root for license information.
 // ------------------------------------------------------------------------------
 
+using Microsoft.Graph.DotnetCore.Test.Mocks;
+
 namespace Microsoft.Graph.DotnetCore.Test.Requests.Extensions
 {
     using System;
     using Xunit;
 
-    public class DriveItemRequestBuilderExtensionsTests : RequestTestBase
+    public class DriveItemRequestBuilderExtensionsTests
     {
         [Fact]
         public void ItemById_BuildRequest()
         {
-            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/me/drive/items/id");
-            var itemRequestBuilder = this.graphServiceClient.Me.Drive.Items["id"] as DriveItemRequestBuilder;
-
-            Assert.NotNull(itemRequestBuilder);
-            Assert.Equal(expectedRequestUri, new Uri(itemRequestBuilder.RequestUrl));
-
-            var itemRequest = itemRequestBuilder.Request() as DriveItemRequest;
-            Assert.NotNull(itemRequest);
-            Assert.Equal(expectedRequestUri, new Uri(itemRequest.RequestUrl));
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/items/id");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Items["id"].ToGetRequestInformation();
+            
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
         }
 
         [Fact]
         public void ItemByPath_BuildRequest()
         {
-            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/me/drive/root:/item/with/path:");
-            var itemRequestBuilder = this.graphServiceClient.Me.Drive.Root.ItemWithPath("item/with/path") as DriveItemRequestBuilder;
-
-            Assert.NotNull(itemRequestBuilder);
-            Assert.Equal(expectedRequestUri, new Uri(itemRequestBuilder.RequestUrl));
-
-            var itemRequest = itemRequestBuilder.Request() as DriveItemRequest;
-            Assert.NotNull(itemRequest);
-            Assert.Equal(expectedRequestUri, new Uri(itemRequest.RequestUrl));
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/root:/item/with/path:");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Root.ItemWithPath("item/with/path").ToGetRequestInformation();
+            
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
+        }
+        
+        [Fact]
+        public void ItemByPath_BuildRequest2()
+        {
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/items/itemId:/item/with/path:");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Items["itemId"].ItemWithPath("item/with/path").ToGetRequestInformation();
+            
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
         }
 
         [Fact]
         public void ItemByPath_BuildRequestWithLeadingSlash()
         {
-            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/me/drive/root:/item/with/path:");
-            var itemRequestBuilder = this.graphServiceClient.Me.Drive.Root.ItemWithPath("/item/with/path") as DriveItemRequestBuilder;
-
-            Assert.NotNull(itemRequestBuilder);
-            Assert.Equal(expectedRequestUri, new Uri(itemRequestBuilder.RequestUrl));
-
-            var itemRequest = itemRequestBuilder.Request() as DriveItemRequest;
-            Assert.NotNull(itemRequest);
-            Assert.Equal(expectedRequestUri, new Uri(itemRequest.RequestUrl));
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/root:/item/with/path:");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Root.ItemWithPath("/item/with/path").ToGetRequestInformation();
+            
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
         }
 
 
@@ -63,15 +67,79 @@ namespace Microsoft.Graph.DotnetCore.Test.Requests.Extensions
         [InlineData("saved_game[1].bin", "saved_game[1].bin")]
         public void ItemByPath_BuildRequestWithSpecialPoundCharacter(string pathInput, string expectedEncodedPath)
         {
-            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/me/drive/root:/" + expectedEncodedPath + ":");
-            var itemRequestBuilder = this.graphServiceClient.Me.Drive.Root.ItemWithPath(pathInput) as DriveItemRequestBuilder;
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/root:/" + expectedEncodedPath + ":");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Root.ItemWithPath(pathInput).ToGetRequestInformation();
+            
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
 
-            Assert.NotNull(itemRequestBuilder);
-            Assert.Equal(expectedRequestUri, new Uri(itemRequestBuilder.RequestUrl));
+        }
+        
+        [Fact]
+        public void ItemByPath_BuildRequestWithNestedPathSlash()
+        {
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/root:/item/with/path:/children");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Root.ItemWithPath("/item/with/path").Children.ToGetRequestInformation();
+            
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
+        }
+        
+        [Fact]
+        public void ItemByPath_BuildRequestWithNestedPathSlash2()
+        {
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/root:/item/with/path:/versions");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Root.ItemWithPath("/item/with/path").Versions.ToGetRequestInformation();
+            
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
+        }
+        
+        [Fact]
+        public void ItemByPath_BuildRequestWithNestedPathSlashAndQueryParameters()
+        {
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/root:/item/with/path:?%24expand=children");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Root.ItemWithPath("/item/with/path").ToGetRequestInformation( requestConfiguration => requestConfiguration.QueryParameters.Expand = new []{"children"});
+            
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
+        }
+        
+        [Fact]
+        public void ItemByPath_BuildRequestWithNestedPathSlashAndQueryParameters2()
+        {
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/root:/item/with/path:/versions?%24count=true");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Root.ItemWithPath("/item/with/path").Versions.ToGetRequestInformation( requestConfiguration => requestConfiguration.QueryParameters.Count = true);
+            
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
+        }
 
-            var itemRequest = itemRequestBuilder.Request() as DriveItemRequest;
-            Assert.NotNull(itemRequest);
-            Assert.Equal(expectedRequestUri, new Uri(itemRequest.RequestUrl));
+        [Fact]
+        public void ItemByPath_BuildRequestWithNestedPathSlashAndOneParameter()
+        {
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/root:/item/with/path:/search(q='doc.docx')");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Root.ItemWithPath("/item/with/path").SearchWithQ("doc.docx").ToGetRequestInformation();
+
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
+        }
+
+        [Fact]
+        public void ItemByPath_BuildRequestWithNestedPathSlashAndMoreThanOneParameter()
+        {
+            var graphServiceClient = new GraphServiceClient(new MockAuthenticationProvider().Object);
+            var expectedRequestUri = new Uri(string.Format(Constants.Url.GraphBaseUrlFormatString, "v1.0") + "/drives/driveId/root:/item/with/path:/getActivitiesByInterval(startDateTime='2023-12-11',endDateTime='2023-12-13',interval='week')");
+            var itemRequestInformation = graphServiceClient.Drives["driveId"].Root.ItemWithPath("/item/with/path").GetActivitiesByIntervalWithStartDateTimeWithEndDateTimeWithInterval("2023-12-13", "week", "2023-12-11").ToGetRequestInformation();
+
+            Assert.NotNull(itemRequestInformation);
+            Assert.Equal(expectedRequestUri, itemRequestInformation.URI);
         }
     }
 }

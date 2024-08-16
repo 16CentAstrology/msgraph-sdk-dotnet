@@ -4,6 +4,8 @@
 
 namespace Microsoft.Graph.DotnetCore.Test.Requests.Functional
 {
+    using Microsoft.Kiota.Abstractions.Authentication;
+    using Microsoft.Kiota.Http.HttpClientLibrary;
     using System;
     using System.Collections.Generic;
     using System.Net.Http;
@@ -15,7 +17,7 @@ namespace Microsoft.Graph.DotnetCore.Test.Requests.Functional
         [Fact(Skip = "No CI set up for functional tests")]
         public async Task JsonBatchRequest()
         {
-            string token = await GetAccessTokenUsingPasswordGrant();
+            string token = await new GraphTokenProvider().GetAuthorizationTokenAsync(new Uri("https%3A%2F%2Fgraph.microsoft.com%2F"));
             HttpClient httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
 
@@ -30,16 +32,18 @@ namespace Microsoft.Graph.DotnetCore.Test.Requests.Functional
             BatchRequestStep requestStep1 = new BatchRequestStep("1", httpRequestMessage1, null);
             BatchRequestStep requestStep2 = new BatchRequestStep("2", httpRequestMessage2, new List<string> { "1" });
 
-            BatchRequestContent batchRequestContent = new BatchRequestContent();
+            var baseClient = new GraphServiceClient(new HttpClientRequestAdapter(new AnonymousAuthenticationProvider()));
+#pragma warning disable CS0618 // Type or member is obsolete
+            BatchRequestContent batchRequestContent = new BatchRequestContent(baseClient);
             batchRequestContent.AddBatchRequestStep(requestStep1);
             batchRequestContent.AddBatchRequestStep(requestStep2);
+#pragma warning restore CS0618 // Type or member is obsolete
 
             HttpResponseMessage response = await httpClient.PostAsync("https://graph.microsoft.com/v1.0/$batch", batchRequestContent);
 
             BatchResponseContent batchResponseContent = new BatchResponseContent(response);
             Dictionary<string, HttpResponseMessage> responses = await batchResponseContent.GetResponsesAsync();
             HttpResponseMessage httpResponse = await batchResponseContent.GetResponseByIdAsync("1");
-            string nextLink = await batchResponseContent.GetNextLinkAsync();
 
             Assert.True(responses.Count.Equals(2));
         }
